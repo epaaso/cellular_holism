@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mitochondrial Membrane Evolution</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background: #0a0a0f;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      font-weight: 300;
+      color: #94a3b8;
+      margin-bottom: 5px;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    button {
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      background: #334155;
+    }
+    
+    button.running {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+    
+    button.start {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+    }
+    
+    .gen-display {
+      padding: 10px 20px;
+      background: #1e293b;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+    
+    .gen-display span {
+      color: #64748b;
+      font-size: 14px;
+    }
+    
+    .gen-display strong {
+      color: #e2e8f0;
+      font-size: 20px;
+      font-family: monospace;
+      margin-left: 8px;
+    }
+    
+    .populations {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    @media (max-width: 700px) {
+      .populations {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .population {
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid #334155;
+    }
+    
+    .population.quantum {
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .pop-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    
+    .pop-title.classical {
+      color: #60a5fa;
+    }
+    
+    .pop-title.quantum {
+      color: #a78bfa;
+    }
+    
+    canvas {
+      display: block;
+      border-radius: 8px;
+      background: #0f172a;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .stat {
+      background: rgba(15, 23, 42, 0.5);
+      padding: 8px;
+      border-radius: 6px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #64748b;
+    }
+    
+    .stat-value {
+      font-family: monospace;
+      font-size: 16px;
+    }
+    
+    .stat-value.classical {
+      color: #60a5fa;
+    }
+    
+    .stat-value.quantum {
+      color: #a78bfa;
+    }
+    
+    .stat-value.green {
+      color: #4ade80;
+    }
+    
+    .stat-value.yellow {
+      color: #facc15;
+    }
+    
+    .stat-value.orange {
+      color: #fb923c;
+    }
+    
+    .chart-container {
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid #334155;
+      margin-bottom: 20px;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    
+    .chart-header span {
+      color: #64748b;
+    }
+    
+    .legend {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .legend-dot.classical {
+      background: #3b82f6;
+    }
+    
+    .legend-dot.quantum {
+      background: #8b5cf6;
+    }
+    
+    .hypothesis {
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid #334155;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    
+    .hypothesis strong {
+      color: #e2e8f0;
+    }
+    
+    .shape-legend {
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 15px;
+    }
+    
+    .shape-legend .hotspot {
+      color: #fb923c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mitochondrial Membrane Evolution</h1>
+    <p class="subtitle">Classical vs Quantum-Assisted ATP Exchange • Swimbots Style</p>
+    
+    <div class="controls">
+      <button id="toggleBtn" class="start" onclick="toggleSimulation()">▶ Evolve</button>
+      <button onclick="reset()">↺ Reset</button>
+      <div class="gen-display">
+        <span>Generation</span>
+        <strong id="genNum">0</strong>
+      </div>
+    </div>
+    
+    <div class="populations">
+      <!-- Classical -->
+      <div class="population">
+        <div class="pop-title classical">Classical (No Quantum)</div>
+        <canvas id="classicalCanvas" width="400" height="320"></canvas>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Best Fitness</div>
+            <div class="stat-value classical" id="classicalFitness">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Shape</div>
+            <div class="stat-value" id="classicalShape">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">ATP Delivered</div>
+            <div class="stat-value green" id="classicalATP">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Fold Complexity</div>
+            <div class="stat-value yellow" id="classicalFolds">0</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Quantum -->
+      <div class="population quantum">
+        <div class="pop-title quantum">Quantum Resonance</div>
+        <canvas id="quantumCanvas" width="400" height="320"></canvas>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Best Fitness</div>
+            <div class="stat-value quantum" id="quantumFitness">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Shape</div>
+            <div class="stat-value" id="quantumShape">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">ATP Delivered</div>
+            <div class="stat-value green" id="quantumATP">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Coherence</div>
+            <div class="stat-value orange" id="quantumCoherence">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <div class="chart-header">
+        <span>Fitness Over Generations</span>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot classical"></div>
+            <span style="color: #60a5fa;">Classical</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot quantum"></div>
+            <span style="color: #a78bfa;">Quantum</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="chartCanvas" width="860" height="120"></canvas>
+    </div>
+    
+    <div class="shape-legend">
+      Shape types: Circle • Ellipse • Spiral • Wavy Tube &nbsp;|&nbsp; 
+      <span class="hotspot">●</span> = Alignment hotspot (coherence zone)
+    </div>
+    
+    <div class="hypothesis">
+      <strong>Hypothesis:</strong> Quantum-assisted evolution (with coherence boosts + penalties for 
+      "bad quantum effects") should evolve more complex, cristae-like membrane geometries. 
+      Watch for: higher fold complexity, different shape preferences, and structured coherence patterns 
+      in the quantum population.
+    </div>
+  </div>
+
+  <script>
+    // ============ GENOME & SHAPE GENERATION ============
+    
+    function createGenome() {
+      return {
+        shapeType: Math.random(),
+        radiusX: 0.4 + Math.random() * 0.4,
+        radiusY: 0.4 + Math.random() * 0.4,
+        spiralTurns: 1 + Math.random() * 2,
+        spiralTightness: 0.15 + Math.random() * 0.25,
+        folds: Array(6).fill(0).map(() => ({
+          freq: 1 + Math.random() * 5,
+          amp: Math.random() * 0.12,
+          phase: Math.random() * Math.PI * 2,
+        })),
+        thickness: 0.03 + Math.random() * 0.03,
+        porosity: 0.3 + Math.random() * 0.4,
+        resonanceThreshold: 0.35 + Math.random() * 0.25,
+        couplingStrength: 0.3 + Math.random() * 0.4,
+        alignmentBias: 0.3 + Math.random() * 0.4,
+        alignmentVariance: 0.1 + Math.random() * 0.2,
+      };
+    }
+    
+    function generateShape(genome, scale) {
+      const points = [];
+      const numPoints = 60;
+      
+      for (let i = 0; i < numPoints; i++) {
+        const t = i / numPoints;
+        const angle = t * Math.PI * 2;
+        
+        let x, y;
+        
+        if (genome.shapeType < 0.25) {
+          // Circle
+          const r = genome.radiusX * scale;
+          x = Math.cos(angle) * r;
+          y = Math.sin(angle) * r;
+        } else if (genome.shapeType < 0.5) {
+          // Ellipse
+          x = Math.cos(angle) * genome.radiusX * scale;
+          y = Math.sin(angle) * genome.radiusY * scale;
+        } else if (genome.shapeType < 0.75) {
+          // Spiral
+          const progress = t * genome.spiralTurns;
+          const r = (0.3 + progress * genome.spiralTightness) * scale;
+          x = Math.cos(angle * genome.spiralTurns) * r;
+          y = Math.sin(angle * genome.spiralTurns) * r;
+        } else {
+          // Wavy tube
+          x = (t - 0.5) * scale * 2;
+          y = Math.sin(t * Math.PI * 3) * genome.radiusY * scale * 0.6;
+        }
+        
+        // Apply fold modulations
+        let foldOffset = 0;
+        genome.folds.forEach(fold => {
+          foldOffset += fold.amp * Math.sin(fold.freq * angle + fold.phase);
+        });
+        
+        const normalAngle = angle + Math.PI / 2;
+        x += Math.cos(normalAngle) * foldOffset * scale;
+        y += Math.sin(normalAngle) * foldOffset * scale;
+        
+        // Alignment propensity
+        const s = genome.alignmentBias + 
+          Math.sin(t * Math.PI * 4 + genome.alignmentVariance * 10) * genome.alignmentVariance;
+        
+        points.push({ x, y, s: Math.max(0, Math.min(1, s)) });
+      }
+      
+      return points;
+    }
+    
+    function getShapeName(genome) {
+      if (genome.shapeType < 0.25) return 'Circle';
+      if (genome.shapeType < 0.5) return 'Ellipse';
+      if (genome.shapeType < 0.75) return 'Spiral';
+      return 'Wavy';
+    }
+    
+    // ============ FITNESS SIMULATION ============
+    
+    function simulateFitness(genome, useQuantum) {
+      const n = 60;
+      
+      const H = new Array(n).fill(5);
+      const A = new Array(n).fill(0);
+      
+      const shape = generateShape(genome, 30);
+      const S = shape.map(p => p.s);
+      
+      const sources = [0, 20, 40];
+      const synthases = [10, 25, 35, 50];
+      const sinks = [15, 45];
+      
+      let delivered = 0;
+      let leaked = 0;
+      let coherenceTotal = 0;
+      
+      const steps = 100;
+      
+      for (let step = 0; step < steps; step++) {
+        // Inject gradient
+        sources.forEach(i => { H[i] += 2.0; });
+        
+        // Calculate coherence
+        const q = new Array(n).fill(0);
+        if (useQuantum) {
+          for (let i = 0; i < n; i++) {
+            const prev = (i - 1 + n) % n;
+            const next = (i + 1) % n;
+            const alignDensity = (S[i] * S[prev] + S[i] * S[next]) / 2;
+            const activation = alignDensity - genome.resonanceThreshold;
+            q[i] = 1 / (1 + Math.exp(-10 * activation));
+            coherenceTotal += q[i];
+          }
+        }
+        
+        // Diffusion
+        const newH = [...H];
+        for (let i = 0; i < n; i++) {
+          const prev = (i - 1 + n) % n;
+          const next = (i + 1) % n;
+          
+          let diffRate = genome.porosity * 0.3;
+          if (useQuantum) {
+            diffRate *= (1 + genome.couplingStrength * (q[i] + q[prev] + q[next]) / 3);
+          }
+          
+          newH[i] += diffRate * (H[prev] - H[i]);
+          newH[i] += diffRate * (H[next] - H[i]);
+        }
+        
+        for (let i = 0; i < n; i++) {
+          H[i] = Math.max(0, newH[i]);
+        }
+        
+        // Leakage
+        for (let i = 0; i < n; i++) {
+          const loss = H[i] * 0.02;
+          H[i] -= loss;
+          leaked += loss;
+        }
+        
+        // ATP synthesis
+        synthases.forEach(i => {
+          let efficiency = 0.15;
+          if (useQuantum && q[i] > 0.4) {
+            efficiency *= (1 + genome.couplingStrength);
+          }
+          const production = Math.min(H[i] * efficiency, H[i] * 0.5);
+          A[i] += production;
+          H[i] -= production * 0.3;
+        });
+        
+        // ATP diffusion
+        const newA = [...A];
+        for (let i = 0; i < n; i++) {
+          const prev = (i - 1 + n) % n;
+          const next = (i + 1) % n;
+          newA[i] += 0.1 * (A[prev] - A[i]);
+          newA[i] += 0.1 * (A[next] - A[i]);
+        }
+        for (let i = 0; i < n; i++) {
+          A[i] = Math.max(0, newA[i]);
+        }
+        
+        // Delivery
+        sinks.forEach(i => {
+          const take = Math.min(A[i], 1.0);
+          A[i] -= take;
+          delivered += take;
+        });
+      }
+      
+      // Fitness
+      let fitness = delivered;
+      const foldComplexity = genome.folds.reduce((sum, f) => sum + f.amp, 0);
+      fitness += foldComplexity * 20;
+      fitness -= (genome.radiusX + genome.radiusY) * 2;
+      
+      const avgCoherence = useQuantum ? coherenceTotal / (n * steps) : 0;
+      if (useQuantum) {
+        fitness -= Math.pow(avgCoherence, 2) * 30;
+        if (avgCoherence > 0.2 && avgCoherence < 0.6) {
+          fitness += 5;
+        }
+      }
+      
+      return {
+        fitness: Math.max(0.1, fitness),
+        delivered,
+        leaked,
+        foldComplexity,
+        coherence: avgCoherence,
+      };
+    }
+    
+    // ============ EVOLUTION ============
+    
+    function mutate(genome, rate = 0.3) {
+      const g = JSON.parse(JSON.stringify(genome));
+      
+      if (Math.random() < 0.08) g.shapeType = Math.random();
+      
+      if (Math.random() < rate) {
+        g.radiusX = Math.max(0.25, Math.min(0.9, g.radiusX + (Math.random() - 0.5) * 0.15));
+      }
+      if (Math.random() < rate) {
+        g.radiusY = Math.max(0.25, Math.min(0.9, g.radiusY + (Math.random() - 0.5) * 0.15));
+      }
+      if (Math.random() < rate) {
+        g.spiralTurns = Math.max(0.5, Math.min(4, g.spiralTurns + (Math.random() - 0.5) * 0.5));
+      }
+      
+      g.folds.forEach(fold => {
+        if (Math.random() < rate) {
+          fold.freq = Math.max(0.5, Math.min(8, fold.freq + (Math.random() - 0.5) * 1));
+        }
+        if (Math.random() < rate) {
+          fold.amp = Math.max(0, Math.min(0.25, fold.amp + (Math.random() - 0.5) * 0.04));
+        }
+        if (Math.random() < rate) {
+          fold.phase += (Math.random() - 0.5) * 0.5;
+        }
+      });
+      
+      if (Math.random() < rate) {
+        g.porosity = Math.max(0.15, Math.min(0.8, g.porosity + (Math.random() - 0.5) * 0.1));
+      }
+      if (Math.random() < rate) {
+        g.resonanceThreshold = Math.max(0.2, Math.min(0.7, g.resonanceThreshold + (Math.random() - 0.5) * 0.1));
+      }
+      if (Math.random() < rate) {
+        g.couplingStrength = Math.max(0.15, Math.min(0.75, g.couplingStrength + (Math.random() - 0.5) * 0.1));
+      }
+      if (Math.random() < rate) {
+        g.alignmentBias = Math.max(0.1, Math.min(0.9, g.alignmentBias + (Math.random() - 0.5) * 0.1));
+      }
+      
+      return g;
+    }
+    
+    function crossover(g1, g2) {
+      const child = JSON.parse(JSON.stringify(g1));
+      
+      if (Math.random() < 0.5) child.shapeType = g2.shapeType;
+      if (Math.random() < 0.5) child.radiusX = g2.radiusX;
+      if (Math.random() < 0.5) child.radiusY = g2.radiusY;
+      if (Math.random() < 0.5) child.spiralTurns = g2.spiralTurns;
+      if (Math.random() < 0.5) child.porosity = g2.porosity;
+      if (Math.random() < 0.5) child.resonanceThreshold = g2.resonanceThreshold;
+      if (Math.random() < 0.5) child.couplingStrength = g2.couplingStrength;
+      if (Math.random() < 0.5) child.alignmentBias = g2.alignmentBias;
+      
+      for (let i = 0; i < child.folds.length; i++) {
+        if (Math.random() < 0.5 && g2.folds[i]) {
+          child.folds[i] = { ...g2.folds[i] };
+        }
+      }
+      
+      return child;
+    }
+    
+    // ============ RENDERING ============
+    
+    function drawOrganism(ctx, org, x, y, size, isQuantum, isBest) {
+      const shape = generateShape(org.genome, size * 0.38);
+      
+      ctx.save();
+      ctx.translate(x, y);
+      
+      // Background
+      ctx.fillStyle = isBest 
+        ? (isQuantum ? 'rgba(139, 92, 246, 0.15)' : 'rgba(59, 130, 246, 0.15)')
+        : 'rgba(30, 41, 59, 0.4)';
+      ctx.fillRect(-size/2 + 2, -size/2 + 2, size - 4, size - 4);
+      
+      // Border
+      ctx.strokeStyle = isBest 
+        ? (isQuantum ? '#8b5cf6' : '#3b82f6')
+        : '#334155';
+      ctx.lineWidth = isBest ? 2 : 1;
+      ctx.strokeRect(-size/2 + 2, -size/2 + 2, size - 4, size - 4);
+      
+      // Draw membrane
+      ctx.beginPath();
+      shape.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      if (org.genome.shapeType < 0.75) ctx.closePath();
+      
+      // Glow
+      ctx.strokeStyle = isQuantum ? 'rgba(167, 139, 250, 0.3)' : 'rgba(96, 165, 250, 0.3)';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      
+      // Main stroke
+      ctx.strokeStyle = isQuantum ? '#a78bfa' : '#60a5fa';
+      ctx.lineWidth = 1.5 + org.genome.thickness * 20;
+      ctx.stroke();
+      
+      // Alignment hotspots (quantum only)
+      if (isQuantum) {
+        shape.forEach((p, i) => {
+          if (i % 5 === 0 && p.s > 0.5) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 1.5 + p.s * 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(251, 146, 60, ${p.s * 0.7})`;
+            ctx.fill();
+          }
+        });
+      }
+      
+      // Fitness label
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(org.fitness.toFixed(1), 0, size/2 - 6);
+      
+      ctx.restore();
+    }
+    
+    function renderPopulation(canvasId, population, isQuantum) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const cellSize = 95;
+      const cols = 4;
+      const offsetX = 15;
+      const offsetY = 10;
+      
+      population.slice(0, 12).forEach((org, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const x = col * cellSize + cellSize / 2 + offsetX;
+        const y = row * cellSize + cellSize / 2 + offsetY;
+        drawOrganism(ctx, org, x, y, cellSize - 8, isQuantum, i === 0);
+      });
+    }
+    
+    function renderChart() {
+      const canvas = document.getElementById('chartCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      if (state.history.classical.length < 2) return;
+      
+      const all = [...state.history.classical, ...state.history.quantum];
+      const maxFit = Math.max(...all, 10);
+      const minFit = Math.min(...all, 0);
+      const range = maxFit - minFit || 1;
+      
+      const padding = 40;
+      const chartWidth = canvas.width - padding * 2;
+      const chartHeight = canvas.height - 30;
+      
+      // Grid
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = 10 + (chartHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(canvas.width - padding, y);
+        ctx.stroke();
+      }
+      
+      // Labels
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(maxFit.toFixed(0), padding - 5, 15);
+      ctx.fillText(minFit.toFixed(0), padding - 5, chartHeight + 10);
+      
+      const toY = (f) => 10 + chartHeight - ((f - minFit) / range) * chartHeight;
+      const toX = (i, len) => padding + (i / Math.max(len - 1, 1)) * chartWidth;
+      
+      // Classical line
+      ctx.beginPath();
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 2;
+      state.history.classical.forEach((f, i) => {
+        const x = toX(i, state.history.classical.length);
+        const y = toY(f);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      
+      // Quantum line
+      ctx.beginPath();
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 2;
+      state.history.quantum.forEach((f, i) => {
+        const x = toX(i, state.history.quantum.length);
+        const y = toY(f);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+    
+    function updateStats() {
+      if (state.classicalPop.length > 0) {
+        const best = state.classicalPop[0];
+        document.getElementById('classicalFitness').textContent = best.fitness.toFixed(1);
+        document.getElementById('classicalShape').textContent = getShapeName(best.genome);
+        document.getElementById('classicalATP').textContent = best.delivered.toFixed(1);
+        document.getElementById('classicalFolds').textContent = best.foldComplexity.toFixed(2);
+      }
+      
+      if (state.quantumPop.length > 0) {
+        const best = state.quantumPop[0];
+        document.getElementById('quantumFitness').textContent = best.fitness.toFixed(1);
+        document.getElementById('quantumShape').textContent = getShapeName(best.genome);
+        document.getElementById('quantumATP').textContent = best.delivered.toFixed(1);
+        document.getElementById('quantumCoherence').textContent = (best.coherence * 100).toFixed(0) + '%';
+      }
+      
+      document.getElementById('genNum').textContent = state.generation;
+    }
+    
+    // ============ SIMULATION STATE ============
+    
+    let state = {
+      running: false,
+      generation: 0,
+      classicalGenomes: [],
+      quantumGenomes: [],
+      classicalPop: [],
+      quantumPop: [],
+      history: { classical: [], quantum: [] },
+      timer: null,
+    };
+    
+    function initialize() {
+      const popSize = 16;
+      
+      state.classicalGenomes = Array(popSize).fill(null).map(() => createGenome());
+      state.quantumGenomes = Array(popSize).fill(null).map(() => createGenome());
+      
+      state.classicalPop = state.classicalGenomes.map(genome => ({
+        genome,
+        ...simulateFitness(genome, false),
+      }));
+      state.quantumPop = state.quantumGenomes.map(genome => ({
+        genome,
+        ...simulateFitness(genome, true),
+      }));
+      
+      state.classicalPop.sort((a, b) => b.fitness - a.fitness);
+      state.quantumPop.sort((a, b) => b.fitness - a.fitness);
+      
+      state.generation = 0;
+      state.history = { 
+        classical: [state.classicalPop[0].fitness], 
+        quantum: [state.quantumPop[0].fitness] 
+      };
+      
+      render();
+    }
+    
+    function evolveStep() {
+      // Evaluate
+      state.classicalPop = state.classicalGenomes.map(genome => ({
+        genome,
+        ...simulateFitness(genome, false),
+      }));
+      state.quantumPop = state.quantumGenomes.map(genome => ({
+        genome,
+        ...simulateFitness(genome, true),
+      }));
+      
+      state.classicalPop.sort((a, b) => b.fitness - a.fitness);
+      state.quantumPop.sort((a, b) => b.fitness - a.fitness);
+      
+      // Selection and reproduction - classical
+      const classicalNext = [state.classicalPop[0].genome, state.classicalPop[1].genome];
+      while (classicalNext.length < state.classicalGenomes.length) {
+        const p1 = state.classicalPop[Math.floor(Math.random() * 8)].genome;
+        const p2 = state.classicalPop[Math.floor(Math.random() * 8)].genome;
+        classicalNext.push(mutate(crossover(p1, p2)));
+      }
+      
+      // Selection and reproduction - quantum
+      const quantumNext = [state.quantumPop[0].genome, state.quantumPop[1].genome];
+      while (quantumNext.length < state.quantumGenomes.length) {
+        const p1 = state.quantumPop[Math.floor(Math.random() * 8)].genome;
+        const p2 = state.quantumPop[Math.floor(Math.random() * 8)].genome;
+        quantumNext.push(mutate(crossover(p1, p2)));
+      }
+      
+      state.classicalGenomes = classicalNext;
+      state.quantumGenomes = quantumNext;
+      state.generation++;
+      
+      // Update history
+      state.history.classical.push(state.classicalPop[0].fitness);
+      state.history.quantum.push(state.quantumPop[0].fitness);
+      
+      if (state.history.classical.length > 60) {
+        state.history.classical.shift();
+        state.history.quantum.shift();
+      }
+      
+      render();
+    }
+    
+    function render() {
+      renderPopulation('classicalCanvas', state.classicalPop, false);
+      renderPopulation('quantumCanvas', state.quantumPop, true);
+      renderChart();
+      updateStats();
+    }
+    
+    function toggleSimulation() {
+      state.running = !state.running;
+      const btn = document.getElementById('toggleBtn');
+      
+      if (state.running) {
+        if (state.classicalGenomes.length === 0) {
+          initialize();
+        }
+        btn.textContent = '⏸ Pause';
+        btn.className = 'running';
+        state.timer = setInterval(evolveStep, 350);
+      } else {
+        btn.textContent = '▶ Evolve';
+        btn.className = 'start';
+        if (state.timer) {
+          clearInterval(state.timer);
+          state.timer = null;
+        }
+      }
+    }
+    
+    function reset() {
+      state.running = false;
+      if (state.timer) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+      
+      const btn = document.getElementById('toggleBtn');
+      btn.textContent = '▶ Evolve';
+      btn.className = 'start';
+      
+      state.classicalGenomes = [];
+      state.quantumGenomes = [];
+      state.classicalPop = [];
+      state.quantumPop = [];
+      state.generation = 0;
+      state.history = { classical: [], quantum: [] };
+      
+      // Clear canvases
+      ['classicalCanvas', 'quantumCanvas', 'chartCanvas'].forEach(id => {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      });
+      
+      document.getElementById('genNum').textContent = '0';
+      document.getElementById('classicalFitness').textContent = '0';
+      document.getElementById('quantumFitness').textContent = '0';
+      document.getElementById('classicalATP').textContent = '0';
+      document.getElementById('quantumATP').textContent = '0';
+      document.getElementById('classicalFolds').textContent = '0';
+      document.getElementById('quantumCoherence').textContent = '0%';
+      document.getElementById('classicalShape').textContent = '-';
+      document.getElementById('quantumShape').textContent = '-';
+    }
+    
+    // Initialize on load
+    window.onload = () => {
+      initialize();
+    };
+  </script>
+</body>
+</html>
